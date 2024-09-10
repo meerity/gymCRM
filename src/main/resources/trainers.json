@@ -1,0 +1,47 @@
+{
+  "1" : {
+    "firstName" : "Peter",
+    "lastName" : "Parker",
+    "username" : "Peter.Parker",
+    "password" : "i0RZQCbovn",
+    "specialization" : "PE",
+    "userId" : 1,
+    "active" : true
+  },
+  "2" : {
+    "firstName" : "Alex",
+    "lastName" : "Priest",
+    "username" : "Alex.Priest2",
+    "password" : "qFOmIKpgb6",
+    "specialization" : "PE",
+    "userId" : 2,
+    "active" : true
+  },
+  "3" : {
+    "firstName" : "C",
+    "lastName" : "C",
+    "username" : "C.C2",
+    "password" : "FPbLBg054t",
+    "specialization" : "PE",
+    "userId" : 3,
+    "active" : true
+  },
+  "4" : {
+    "firstName" : "C",
+    "lastName" : "C",
+    "username" : "C.C1",
+    "password" : "mSicP7myBY",
+    "specialization" : "sp",
+    "userId" : 4,
+    "active" : true
+  },
+  "5" : {
+    "firstName" : "C",
+    "lastName" : "C",
+    "username" : "C.C",
+    "password" : "KedayH6Hvq",
+    "specialization" : "PE",
+    "userId" : 5,
+    "active" : true
+  }
+}
