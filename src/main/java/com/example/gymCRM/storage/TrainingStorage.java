@@ -19,11 +19,12 @@ import java.util.Map;
 public class TrainingStorage {
 
     @Getter
-    private Map<String, Training> trainings = new HashMap<>();
-    private final File json = new File("src/main/resources/trainings.json");
+    private Map<String, Training> trainings;
+    private final File json;
     private final ObjectMapper mapper;
 
     public TrainingStorage() {
+        json = new File("src/main/resources/trainings.json");
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
     }
@@ -36,8 +37,12 @@ public class TrainingStorage {
     @PostConstruct
     public void init() {
         try {
-            trainings = mapper.readValue(json, mapper.getTypeFactory().constructMapType(HashMap.class, Integer.class, Training.class));
-            log.info("Trainings loaded: {} instances", trainings.size());
+            trainings = mapper.readValue(json, mapper.getTypeFactory().constructMapType(HashMap.class, String.class, Training.class));
+            if (trainings == null){
+                log.error("trainings is null");
+            } else {
+                log.info("Trainings loaded: {} instances", trainings.size());
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }

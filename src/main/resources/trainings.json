@@ -1,1 +1,22 @@
-{ }
+{
+  "Training1" : {
+    "traineeId" : 1,
+    "trainerId" : 1,
+    "trainingName" : "Training1",
+    "trainingType" : {
+      "trainingTypeName" : "Cardio"
+    },
+    "trainingDate" : [ 2024, 1, 2 ],
+    "trainingDuration" : 60
+  },
+  "training2" : {
+    "traineeId" : 4,
+    "trainerId" : 1,
+    "trainingName" : "training2",
+    "trainingType" : {
+      "trainingTypeName" : "cardio"
+    },
+    "trainingDate" : [ 2024, 9, 5 ],
+    "trainingDuration" : 90
+  }
+}
