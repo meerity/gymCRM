@@ -2,13 +2,9 @@ package com.example.gymCRM.service;
 
 import com.example.gymCRM.dao.TrainerDAO;
 import com.example.gymCRM.entity.Trainer;
-import com.example.gymCRM.security.PasswordGenerator;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -18,17 +14,8 @@ public class TrainerServiceTest {
     @Mock
     private TrainerDAO trainerDAO;
 
-    @Mock
-    private PasswordGenerator passwordGenerator;
-
     @InjectMocks
     private TrainerService trainerService;
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trainerService.setPasswordGenerator(passwordGenerator);
-    }
 
     @Test
     public void shouldUpdateTrainerSuccessfully() {

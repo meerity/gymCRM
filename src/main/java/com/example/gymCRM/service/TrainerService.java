@@ -2,10 +2,10 @@ package com.example.gymCRM.service;
 
 import com.example.gymCRM.dao.TrainerDAO;
 import com.example.gymCRM.entity.Trainer;
-import com.example.gymCRM.security.PasswordGenerator;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +15,6 @@ import java.util.List;
 public class TrainerService {
 
     private final TrainerDAO trainerDAO;
-    private PasswordGenerator passwordGenerator;
     private int currentIndex;
 
     public TrainerService(TrainerDAO trainerDAO) {
@@ -36,7 +35,8 @@ public class TrainerService {
             newTrainer.setFirstName(firstName);
             newTrainer.setLastName(lastName);
             createUserName(newTrainer, firstName, lastName);
-            newTrainer.setPassword(passwordGenerator.generatePassword());
+            String password = RandomStringUtils.secure().nextAlphanumeric(10);
+            newTrainer.setPassword(password);
             newTrainer.setActive(isActive);
             newTrainer.setSpecialization(specialization);
             newTrainer.setUserId(++currentIndex);
@@ -82,11 +82,6 @@ public class TrainerService {
         trainerDAO.update(trainer);
         log.info("Trainer updated: {} {}", trainer.getFirstName(), trainer.getLastName());
         return true;
-    }
-
-    @Autowired
-    protected void setPasswordGenerator(PasswordGenerator passwordGenerator) {
-        this.passwordGenerator = passwordGenerator;
     }
 
     @PostConstruct

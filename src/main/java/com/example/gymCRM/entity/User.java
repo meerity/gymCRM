@@ -24,7 +24,7 @@ public abstract class User {
     @Override
     public String toString() {
         String activeness = isActive ? "active" : "inactive";
-        return ", " + firstName + " " + lastName + ", Username: " + username + ", Password: " + password + ", Status: " + activeness;
+        return ", " + firstName + " " + lastName + ", Username: " + username + ", Status: " + activeness;
     }
 
 }

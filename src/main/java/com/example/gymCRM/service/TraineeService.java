@@ -2,10 +2,10 @@ package com.example.gymCRM.service;
 
 import com.example.gymCRM.dao.TraineeDAO;
 import com.example.gymCRM.entity.Trainee;
-import com.example.gymCRM.security.PasswordGenerator;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,7 +16,6 @@ import java.util.List;
 public class TraineeService {
 
     private final TraineeDAO traineeDAO;
-    private PasswordGenerator passwordGenerator;
     private int currentIndex;
 
     public TraineeService(TraineeDAO traineeDAO) {
@@ -37,7 +36,8 @@ public class TraineeService {
             newTrainee.setFirstName(firstName);
             newTrainee.setLastName(lastName);
             createUserName(newTrainee, firstName, lastName);
-            newTrainee.setPassword(passwordGenerator.generatePassword());
+            String password = RandomStringUtils.secure().nextAlphanumeric(10);
+            newTrainee.setPassword(password);
             newTrainee.setActive(isActive);
             newTrainee.setDateOfBirth(dateOfBirth);
             newTrainee.setAddress(address);
@@ -105,11 +105,6 @@ public class TraineeService {
             log.error("Failed to delete trainee with id {}", id);
             return false;
         }
-    }
-
-    @Autowired
-    protected void setPasswordGenerator(PasswordGenerator passwordGenerator) {
-        this.passwordGenerator = passwordGenerator;
     }
 
     @PostConstruct
