@@ -1,37 +1,40 @@
-package com.example.gymCRM.entity;
+package com.example.gymcrm.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.Set;
+import jakarta.persistence.*;
 
 
-@Data
-@NoArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-public class Trainee extends User {
+@Getter
+@Setter 
+@Entity
+@Table(name = "trainee")
+public class Trainee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
-    private String address;
-    private int userId;
 
-    @JsonCreator
-    public Trainee(@JsonProperty("firstName") String firstName,
-                   @JsonProperty("lastName") String lastName,
-                   @JsonProperty("username") String username,
-                   @JsonProperty("password") String password,
-                   @JsonProperty("isActive") boolean isActive,
-                   @JsonProperty("dateOfBirth") LocalDate dateOfBirth,
-                   @JsonProperty("address") String address,
-                   @JsonProperty("userId") int userId) {
-        super(firstName, lastName, username, password, isActive);
-        this.dateOfBirth = dateOfBirth;
-        this.address = address;
-        this.userId = userId;
-    }
+    @Column
+    private String address;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id",  referencedColumnName = "id", nullable = false)
+    private User user;
+
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<Training> trainings;
+
+    @ManyToMany(mappedBy = "trainees", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Set<Trainer> trainers;
 
     @Override
     public String toString() {
-        return "Id: " + userId + super.toString() + ", Date of birth: " + dateOfBirth + ", Address: " + address;
+        return "Id: " + user + user.toString() + ", Date of birth: " + dateOfBirth + ", Address: " + address;
     }
 }

@@ -1,39 +1,51 @@
-package com.example.gymCRM.entity;
+package com.example.gymcrm.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDate;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-@Data
-@NoArgsConstructor
+
+@Getter
+@Setter
+@Entity
+@Table(name = "training")
 public class Training {
-    private int traineeId;
-    private int trainerId;
-    private String trainingName;
-    private TrainingType trainingType;
-    private LocalDate trainingDate;
-    private int trainingDuration;
 
-    @JsonCreator
-    public Training(@JsonProperty("traineeId") int traineeId,
-                    @JsonProperty("trainerId") int trainerId,
-                    @JsonProperty("trainingName") String trainingName,
-                    @JsonProperty("trainingType") TrainingType trainingType,
-                    @JsonProperty("trainingDate") LocalDate trainingDate,
-                    @JsonProperty("trainingDuration") int trainingDuration) {
-        this.traineeId = traineeId;
-        this.trainerId = trainerId;
-        this.trainingName = trainingName;
-        this.trainingType = trainingType;
-        this.trainingDate = trainingDate;
-        this.trainingDuration = trainingDuration;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @ManyToOne
+    @JoinColumn(name = "trainee_id", referencedColumnName = "id", nullable = false)
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id", referencedColumnName = "id", nullable = false)
+    private Trainer trainer;
+
+    @Column(name = "training_name", nullable = false)
+    private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "training_type_id", referencedColumnName = "id", nullable = false)
+    private TrainingType trainingType;
+
+    @Column(name = "training_date", nullable = false)
+    private LocalDate trainingDate;
+
+    @Column(nullable = false)
+    private int duration;
 
     @Override
     public String toString() {
-        return "Trainer Id: " + trainerId + ", Trainee Id: " + traineeId + ", Training Name: " + trainingName + ", Training Type: " + trainingType + ", Training Date: " + trainingDate + ", Training Duration: " + trainingDuration;
+        return "Trainer Id: " + trainer.getId() + ", Trainee Id: " + trainee.getId() + ", Training Name: " + trainingName + ", Training Type: " + trainingType + ", Training Date: " + trainingDate + ", Training Duration: " + duration;
     }
 }
