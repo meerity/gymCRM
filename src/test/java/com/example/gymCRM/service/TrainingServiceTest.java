@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import com.example.gymcrm.dto.response.TrainingResponse;
+import com.example.gymcrm.dto.response.training.TrainingResponseForTrainee;
+import com.example.gymcrm.dto.response.training.TrainingResponseForTrainer;
 import com.example.gymcrm.entity.Trainee;
 import com.example.gymcrm.entity.Trainer;
 import com.example.gymcrm.entity.Training;
@@ -81,13 +81,12 @@ class TrainingServiceTest {
 
         when(userRepository.findByUsername("John.Doe")).thenReturn(Optional.of(user));
 
-        List<TrainingResponse> result = trainingService.getTrainingsWithCriteria("John.Doe", null, null, null, null);
+        List<TrainingResponseForTrainer> result = trainingService.getTrainingsWithCriteriaForTrainer("John.Doe", null, null, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Test Training", result.get(0).getTrainingName());
         assertEquals("Fitness", result.get(0).getTypeName());
-        assertEquals("Jane.Smith", result.get(0).getTraineeUsername());
     }
 
     @Test
@@ -118,13 +117,12 @@ class TrainingServiceTest {
 
         when(userRepository.findByUsername("Jane.Smith")).thenReturn(Optional.of(user));
 
-        List<TrainingResponse> result = trainingService.getTrainingsWithCriteria("Jane.Smith", null, null, null, null);
+        List<TrainingResponseForTrainee> result = trainingService.getTrainingsWithCriteriaForTrainee("Jane.Smith", null, null, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Test Training", result.get(0).getTrainingName());
         assertEquals("Yoga", result.get(0).getTypeName());
-        assertEquals("John.Doe", result.get(0).getTrainerUsername());
     }
 
     @Test
@@ -151,10 +149,12 @@ class TrainingServiceTest {
         
         Trainer trainer2 = new Trainer();
         User trainerUser2 = new User();
-        trainerUser2.setUsername("John.Doe1");
-        trainerUser2.setFirstName("Jane");
+        trainerUser2.setUsername("John.Smith");
+        trainerUser2.setFirstName("John");
         trainerUser2.setLastName("Smith");
         trainer2.setUser(trainerUser2);
+
+        trainee.setTrainers(new HashSet<>(Arrays.asList(trainer1, trainer2)));
         
         Training training1 = new Training();
         training1.setTrainingName("Yoga Session");
@@ -176,7 +176,7 @@ class TrainingServiceTest {
 
         when(userRepository.findByUsername("Jane.Smith")).thenReturn(Optional.of(user));
 
-        List<TrainingResponse> result = trainingService.getTrainingsWithCriteria(
+        List<TrainingResponseForTrainee> result = trainingService.getTrainingsWithCriteriaForTrainee(
             "Jane.Smith", 
             LocalDate.of(2023, 5, 1), 
             LocalDate.of(2023, 5, 31), 
@@ -188,7 +188,6 @@ class TrainingServiceTest {
         assertEquals(1, result.size());
         assertEquals("Yoga Session", result.get(0).getTrainingName());
         assertEquals("Yoga", result.get(0).getTypeName());
-        assertEquals("John.Doe", result.get(0).getTrainerUsername());
     }
 
     @Test
@@ -196,7 +195,7 @@ class TrainingServiceTest {
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class, () -> 
-            trainingService.getTrainingsWithCriteria("nonexistent", null, null, null, null)
+            trainingService.getTrainingsWithCriteriaForTrainee("nonexistent", null, null, null, null)
         );
     }
 }

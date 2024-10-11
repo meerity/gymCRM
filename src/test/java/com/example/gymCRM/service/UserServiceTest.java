@@ -67,15 +67,19 @@ class UserServiceTest {
     @Test
     void testChangePassword() {
         User user = new User();
+        user.setUsername("user");
+        user.setPassword("encodedOldPassword");
+
         when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedPassword");
-        
+        when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+
         PasswordChangeDTO passwordDTO = new PasswordChangeDTO();
-        passwordDTO.setPassword("newPassword");
+        passwordDTO.setNewPassword("newPassword");
         
-        userService.changePassword("user", passwordDTO);
+        userService.changePassword("user", "oldPassword", passwordDTO.getNewPassword());
         
-        assertEquals("encodedPassword", user.getPassword());
+        assertEquals("encodedNewPassword", user.getPassword());
         verify(userRepository).save(user);
     }
     

@@ -12,11 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import com.example.gymcrm.dto.TrainerDTO;
-import com.example.gymcrm.dto.response.TrainerResponse;
-import com.example.gymcrm.dto.update.TrainerUpdateDTO;
+import com.example.gymcrm.dto.misc.UsernameAndPassword;
+import com.example.gymcrm.dto.response.trainer.FourFieldsTrainerResponse;
+import com.example.gymcrm.dto.response.trainer.TrainerResponse;
 import com.example.gymcrm.entity.Trainer;
-import com.example.gymcrm.entity.Training;
 import com.example.gymcrm.entity.User;
 import com.example.gymcrm.entity.TrainingType;
 import com.example.gymcrm.repository.TrainerRepository;
@@ -41,7 +40,7 @@ public class TrainerService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + username + " not found"));
 
-        if (user.getTrainer() == null && user.getTrainee() != null) {
+        if (user.getTrainer() == null) {
             throw new NoSuchElementException(THIS_USER_IS_TRAINEE);
         }
 
@@ -60,7 +59,7 @@ public class TrainerService {
     public Trainer getTrainerByUsername(String username){
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("Trainer was not found"));
-        if (user.getTrainer() == null && user.getTrainer() != null) {
+        if (user.getTrainer() == null) {
             throw new NoSuchElementException(THIS_USER_IS_TRAINEE);
         } else {
             return user.getTrainer();
@@ -75,10 +74,10 @@ public class TrainerService {
         if (trainer == null) {
             throw new NoSuchElementException(THIS_USER_IS_TRAINEE);
         }
-        return parseTrainertoResponse(trainer);
+        return getTrainerResponse(user, trainer);
     }
 
-    public List<TrainerResponse> getNotAssignedTrainersByTraineeUsername(String traineeUsername) throws NoSuchElementException {
+    public List<FourFieldsTrainerResponse> getNotAssignedActiveTrainersByTraineeUsername(String traineeUsername) throws NoSuchElementException {
         User userTrainee = userRepository.findByUsername(traineeUsername)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find Trainer by this username: " + traineeUsername));        
 
@@ -89,23 +88,24 @@ public class TrainerService {
         List<Trainer> allTrainers = trainerRepository.findAll();
         return allTrainers.stream()
                 .filter(trainer -> !trainer.getTrainees().contains(userTrainee.getTrainee()))
-                .map(this::parseTrainertoResponse)
+                .filter(trainer -> trainer.getUser().getActive())
+                .map(trainer -> getNotAssignedTrainerResponse(trainer.getUser(), trainer))
                 .toList();
     }
 
     @Transactional
-    public Pair<String, String> createProfile(TrainerDTO trainerDTO) {
+    public UsernameAndPassword createProfile(String firstName, String lastName, String specialization) {
         User user = new User();
-        user.setFirstName(trainerDTO.getFirstName());
-        user.setLastName(trainerDTO.getLastName());
-        String username =  UserUtils.createUserName(trainerDTO.getFirstName(), trainerDTO.getLastName(), userRepository);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        String username =  UserUtils.createUserName(firstName, lastName, userRepository);
         user.setUsername(username);
         String password = RandomStringUtils.secure().nextAlphanumeric(10);
         user.setPassword(passwordEncoder.encode(password));
-        user.setActive(trainerDTO.getIsActive());
+        user.setActive(true);
 
         Trainer trainer = new Trainer();
-        TrainingType trainingType = trainingTypeRepository.findByTypeName(trainerDTO.getSpecialization())
+        TrainingType trainingType = trainingTypeRepository.findByTypeName(specialization)
                 .orElseThrow(() -> new NoSuchElementException("This training type is not valid!"));
         trainer.setSpecialization(trainingType);
         trainer.setTrainees(new HashSet<>());
@@ -117,54 +117,56 @@ public class TrainerService {
         trainerRepository.save(trainer);
 
         log.info("New trainer profile created: {} {}", user.getFirstName(), user.getLastName());
-        return Pair.of(username, password);
+        return new UsernameAndPassword(username, password);
     }
     
-
-    public String updateTrainer(String username, TrainerUpdateDTO trainerUpdateDTO) throws NoSuchElementException {
+    @Transactional
+    public TrainerResponse updateTrainer(String username, String firstName, String lastName, String specialization, boolean isActive) throws NoSuchElementException {
         Pair<User, Trainer> userAndTrainer = getUserTrainerByUsername(username);
         User user = userAndTrainer.getLeft();
         Trainer trainer = userAndTrainer.getRight();
 
-        boolean newFirstnameNotNull = trainerUpdateDTO.getFirstName() != null;
-        boolean newLastnameNotNull = trainerUpdateDTO.getLastName() != null;
-        String newUsername;
-        
-        if (newFirstnameNotNull || newLastnameNotNull) {
-            if (newFirstnameNotNull) {
-                user.setFirstName(trainerUpdateDTO.getFirstName());
-            }
-            if (newLastnameNotNull) {
-                user.setLastName(trainerUpdateDTO.getLastName());
-            }
-            newUsername = UserUtils.createUserName(user.getFirstName(), user.getLastName(), userRepository);
-            user.setUsername(newUsername);
-        } else {
-            newUsername = user.getUsername();
-        }
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
 
-        if (trainerUpdateDTO.getSpecialization() != null) {
-            TrainingType trainingType = trainingTypeRepository.findByTypeName(trainerUpdateDTO.getSpecialization())
+        TrainingType trainingType = trainingTypeRepository.findByTypeName(specialization)
                 .orElseThrow(() -> new NoSuchElementException("Training type not found"));
-            trainer.setSpecialization(trainingType);    
-        }
+        trainer.setSpecialization(trainingType);   
+
+        user.setActive(isActive);
 
         userRepository.save(user);
         trainerRepository.save(trainer);
         
         log.info("Trainer updated: {} {}", user.getFirstName(), user.getLastName());
-        return newUsername;
+        return getTrainerResponse(user, trainer);
     }
 
-    private TrainerResponse parseTrainertoResponse(Trainer trainer){
+    private TrainerResponse getTrainerResponse(User user, Trainer trainer){
         TrainerResponse response = new TrainerResponse();
-        response.setFirstName(trainer.getUser().getFirstName());
-        response.setLastName(trainer.getUser().getLastName());
-        response.setUsername(trainer.getUser().getUsername());
-        response.setActive(trainer.getUser().getActive());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setActive(user.getActive());
         response.setSpecialization(trainer.getSpecialization().getTypeName());
-        response.setTraineeUsernames(trainer.getTrainees().stream().map(trainee -> trainee.getUser().getUsername()).collect(Collectors.toSet()));
-        response.setTrainingNames(trainer.getTrainings().stream().map(Training::getTrainingName).collect(Collectors.toSet()));
+
+        response.setTrainees(
+            trainer.getTrainees().stream().map(trainee -> {
+                TrainerResponse.TraineeInfo traineeInfo = response.new TraineeInfo();
+                traineeInfo.setUsername(trainee.getUser().getUsername());
+                traineeInfo.setFirstName(trainee.getUser().getFirstName());
+                traineeInfo.setLastName(trainee.getUser().getLastName());
+                return traineeInfo;
+            }).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    private FourFieldsTrainerResponse getNotAssignedTrainerResponse(User user, Trainer trainer){
+        FourFieldsTrainerResponse response = new FourFieldsTrainerResponse();
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setSpecialization(trainer.getSpecialization().getTypeName());
+        response.setUsername(user.getUsername());
         return response;
     }
 

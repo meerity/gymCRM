@@ -12,13 +12,18 @@ public class UserUtils {
     }
 
     public static String createUserName(String firstName, String lastName, UserRepository userRepository) {
-        List<User> trainersWithSameFullName = userRepository.findByFirstNameAndLastName(firstName, lastName);
-        String username;
-        if (trainersWithSameFullName.isEmpty()) {
-            username = firstName + "." + lastName;
-        } else {
-            username = firstName + "." + lastName + trainersWithSameFullName.size();
+        String baseUsername = firstName + "." + lastName;
+        List<User> usersWithSameUsername = userRepository.findByUsernameStartingWith(baseUsername);
+        if (usersWithSameUsername.isEmpty()) {
+            return baseUsername;
         }
-        return username;
+        int number = usersWithSameUsername.stream()
+                .map(User::getUsername)
+                .map(username -> username.substring(baseUsername.length()))
+                .filter(suffix -> suffix.matches("\\d+"))
+                .mapToInt(Integer::parseInt)
+                .max()
+                .orElse(0) + 1;
+        return baseUsername + number;
     }
 }

@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,48 +19,36 @@ class UserUtilsTest {
     @Mock
     private UserRepository userRepository;
 
+    private UserUtils userUtils;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testCreateUserName_NoExistingUsers() {
-        when(userRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(new ArrayList<>());
+    void testGenerateUsername_FirstTimeUser() {
+        when(userRepository.findByUsernameStartingWith(anyString())).thenReturn(new ArrayList<>());
 
         String username = UserUtils.createUserName("John", "Doe", userRepository);
 
         assertEquals("John.Doe", username);
-        verify(userRepository).findByFirstNameAndLastName("John", "Doe");
+        verify(userRepository, times(1)).findByUsernameStartingWith("John.Doe");
     }
 
     @Test
-    void testCreateUserName_ExistingUsers() {
-        List<User> existingUsers = new ArrayList<>();
-        existingUsers.add(new User());
-        existingUsers.add(new User());
+    void testGenerateUsername_UserExists() {
+        User existingUser = new User();
+        existingUser.setFirstName("John");
+        existingUser.setLastName("Doe");
+        existingUser.setUsername("John.Doe");
 
-        when(userRepository.findByFirstNameAndLastName("Jane", "Smith")).thenReturn(existingUsers);
+        when(userRepository.findByUsernameStartingWith("John.Doe")).thenReturn(List.of(existingUser));
 
-        String username = UserUtils.createUserName("Jane", "Smith", userRepository);
+        String username = UserUtils.createUserName("John", "Doe", userRepository);
 
-        assertEquals("Jane.Smith2", username);
-        verify(userRepository).findByFirstNameAndLastName("Jane", "Smith");
-    }
-
-    @Test
-    void testCreateUserName_MultipleExistingUsers() {
-        List<User> existingUsers = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            existingUsers.add(new User());
-        }
-
-        when(userRepository.findByFirstNameAndLastName("Robert", "Johnson")).thenReturn(existingUsers);
-
-        String username = UserUtils.createUserName("Robert", "Johnson", userRepository);
-
-        assertEquals("Robert.Johnson5", username);
-        verify(userRepository).findByFirstNameAndLastName("Robert", "Johnson");
+        assertEquals("John.Doe1", username);
+        verify(userRepository, times(1)).findByUsernameStartingWith("John.Doe");
     }
 }
 

@@ -7,17 +7,16 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import com.example.gymcrm.dto.TraineeDTO;
-import com.example.gymcrm.dto.response.TraineeResponse;
-import com.example.gymcrm.dto.update.TraineeUpdateDTO;
+import com.example.gymcrm.dto.misc.UsernameAndPassword;
+import com.example.gymcrm.dto.response.trainee.TraineeResponse;
+import com.example.gymcrm.dto.response.trainer.FourFieldsTrainerResponse;
 import com.example.gymcrm.entity.Trainee;
 import com.example.gymcrm.entity.Trainer;
-import com.example.gymcrm.entity.Training;
 import com.example.gymcrm.entity.User;
 import com.example.gymcrm.repository.TraineeRepository;
 import com.example.gymcrm.repository.UserRepository;
@@ -60,7 +59,7 @@ public class TraineeService {
         }
     }
 
-    public TraineeResponse getTraineeForResponseByUsername(String username){
+    public TraineeResponse getTraineeForResponseByUsername(String username) throws NoSuchElementException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("Trainee was not found"));
         Trainee trainee = user.getTrainee();
@@ -69,32 +68,23 @@ public class TraineeService {
             throw new NoSuchElementException(THIS_USER_IS_TRAINER);
         }
 
-        TraineeResponse response = new TraineeResponse();
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setUsername(user.getUsername());
-        response.setActive(user.getActive());
-        response.setDateOfBirth(trainee.getDateOfBirth());
-        response.setAddress(trainee.getAddress());
-        response.setTrainerUsernames(trainee.getTrainers().stream().map(trainer -> trainer.getUser().getUsername()).collect(Collectors.toSet()));
-        response.setTrainingNames(trainee.getTrainings().stream().map(Training::getTrainingName).collect(Collectors.toSet()));
-        return response;
+        return getTraineeResponse(user, trainee);
     }
 
     @Transactional
-    public Pair<String, String> createProfile(TraineeDTO traineeDTO) {
+    public UsernameAndPassword createProfile(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         User user = new User();
-        user.setFirstName(traineeDTO.getFirstName());
-        user.setLastName(traineeDTO.getLastName());
-        String username = UserUtils.createUserName(traineeDTO.getFirstName(), traineeDTO.getLastName(), userRepository);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        String username = UserUtils.createUserName(firstName, lastName, userRepository);
         user.setUsername(username);
         String password = RandomStringUtils.secure().nextAlphanumeric(10);
         user.setPassword(passwordEncoder.encode(password));
-        user.setActive(traineeDTO.getIsActive());
+        user.setActive(true);
 
         Trainee trainee = new Trainee();
-        trainee.setAddress(traineeDTO.getAddress());
-        trainee.setDateOfBirth(traineeDTO.getDateOfBirth());
+        trainee.setAddress(address);
+        trainee.setDateOfBirth(dateOfBirth);
         trainee.setTrainers(new HashSet<>());
         trainee.setTrainings(new HashSet<>());
         trainee.setUser(user);
@@ -104,45 +94,30 @@ public class TraineeService {
         traineeRepository.save(trainee);
 
         log.info("New trainee profile created: {} {}", user.getFirstName(), user.getLastName());
-        return Pair.of(username, password);
+        return new UsernameAndPassword(username, password);
     }
 
-    public String updateTrainee(String username, TraineeUpdateDTO traineeUpdateDTO) throws NoSuchElementException {
+    @Transactional
+    public TraineeResponse updateTrainee(String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) throws NoSuchElementException {
         Pair<User, Trainee> userAndTrainee = getUserTraineeByUsername(username);
         User user = userAndTrainee.getLeft();
         Trainee trainee = userAndTrainee.getRight();
-        
-        boolean newFirstnameNotNull = traineeUpdateDTO.getFirstName() != null;
-        boolean newLastnameNotNull = traineeUpdateDTO.getLastName() != null;
-        String newUsername;
 
-        if (newFirstnameNotNull || newLastnameNotNull) {
-            if (newFirstnameNotNull) {
-                user.setFirstName(traineeUpdateDTO.getFirstName());
-            }
-            if (newLastnameNotNull) {
-                user.setLastName(traineeUpdateDTO.getLastName());
-            }
-            newUsername = UserUtils.createUserName(user.getFirstName(), user.getLastName(), userRepository);
-            user.setUsername(newUsername);
-        } else {
-            newUsername = user.getUsername();
-        }
-        if (traineeUpdateDTO.getDateOfBirth() != null) {
-            trainee.setDateOfBirth(traineeUpdateDTO.getDateOfBirth());
-        }
-        if (traineeUpdateDTO.getAddress() != null) {
-            trainee.setAddress(traineeUpdateDTO.getAddress());
-        }
+        user.setFirstName(firstName);        
+        user.setLastName(lastName);
+        user.setActive(isActive);
+        trainee.setDateOfBirth(dateOfBirth);
+        trainee.setAddress(address);
+
         userRepository.save(user);
         traineeRepository.save(trainee);
         
         log.info("Trainee updated: {} {}", user.getFirstName(), user.getLastName());
-        return newUsername;
+        return getTraineeResponse(user, trainee);
     }
 
     @Transactional
-    public void updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames) {
+    public List<FourFieldsTrainerResponse> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames) throws NoSuchElementException {
         Pair<User, Trainee> userAndTrainee = getUserTraineeByUsername(traineeUsername);
         Trainee trainee = userAndTrainee.getRight();
 
@@ -159,6 +134,7 @@ public class TraineeService {
 
         trainee.setTrainers(new HashSet<>(newTrainers));
         traineeRepository.save(trainee);
+        return newTrainers.stream().map(this::parseTrainerToFourFieldsTraineeResponse).toList();
     }
 
     public void deleteTrainee(String username) throws NoSuchElementException {
@@ -170,6 +146,36 @@ public class TraineeService {
         }
         traineeRepository.delete(user.getTrainee());
         userRepository.delete(user);
+    }
+
+    private TraineeResponse getTraineeResponse(User user, Trainee trainee){
+
+        TraineeResponse traineeResponse = new TraineeResponse();
+        traineeResponse.setFirstName(user.getFirstName());
+        traineeResponse.setLastName(user.getLastName());
+        traineeResponse.setActive(user.getActive());
+        traineeResponse.setDateOfBirth(trainee.getDateOfBirth());
+        traineeResponse.setAddress(trainee.getAddress());
+
+        traineeResponse.setTrainers(trainee.getTrainers().stream().map(trainer -> {
+            TraineeResponse.TrainerInfo trainerInfo = traineeResponse.new TrainerInfo();
+            trainerInfo.setUsername(trainer.getUser().getUsername());
+            trainerInfo.setFirstName(trainer.getUser().getFirstName());
+            trainerInfo.setLastName(trainer.getUser().getLastName());
+            trainerInfo.setSpecialization(trainer.getSpecialization().getTypeName());
+            return trainerInfo;
+        }).toList());
+
+        return traineeResponse; 
+    }
+
+    private FourFieldsTrainerResponse parseTrainerToFourFieldsTraineeResponse(Trainer trainer){
+        FourFieldsTrainerResponse fourFieldsTraineeResponse = new FourFieldsTrainerResponse();
+        fourFieldsTraineeResponse.setUsername(trainer.getUser().getUsername());
+        fourFieldsTraineeResponse.setFirstName(trainer.getUser().getFirstName());
+        fourFieldsTraineeResponse.setLastName(trainer.getUser().getLastName());
+        fourFieldsTraineeResponse.setSpecialization(trainer.getSpecialization().getTypeName());
+        return fourFieldsTraineeResponse;
     }
 
 }

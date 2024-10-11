@@ -1,6 +1,7 @@
 package com.example.gymcrm.dto;
 
 import lombok.Data;
+import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 
@@ -15,8 +16,8 @@ public class TrainingDTO {
     @NotBlank(message = "Training name cannot be blank")
     private String trainingName;
 
-    @NotBlank(message = "Training type name cannot be blank")
-    private String trainingTypeName;
+    @NotBlank(message = "Training date cannot be null")
+    private LocalDate trainingDate;
 
     @Positive(message = "Duration must be a positive number")
     private int duration;

@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -15,9 +14,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.example.gymcrm.dto.TrainerDTO;
-import com.example.gymcrm.dto.response.TrainerResponse;
-import com.example.gymcrm.dto.update.TrainerUpdateDTO;
+import com.example.gymcrm.dto.misc.UsernameAndPassword;
+import com.example.gymcrm.dto.response.trainer.TrainerResponse;
 import com.example.gymcrm.entity.Trainer;
 import com.example.gymcrm.entity.TrainingType;
 import com.example.gymcrm.entity.User;
@@ -84,11 +82,9 @@ class TrainerServiceTest {
 
     @Test
     void testCreateTrainer() {
-        TrainerDTO trainerDTO = new TrainerDTO();
-        trainerDTO.setFirstName("John");
-        trainerDTO.setLastName("Doe");
-        trainerDTO.setSpecialization("Fitness");
-        trainerDTO.setIsActive(true);
+        String firstName = "John";
+        String lastName = "Doe";
+        String specialization = "Fitness";
 
         User user = new User();
         user.setUsername("John.Doe");
@@ -105,40 +101,42 @@ class TrainerServiceTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(trainingTypeRepository.findByTypeName("Fitness")).thenReturn(Optional.of(trainingType));
 
-        Pair<String, String> response = trainerService.createProfile(trainerDTO);
+        UsernameAndPassword response = trainerService.createProfile(firstName, lastName, specialization);
 
         assertNotNull(response);
-        assertEquals("John.Doe", response.getLeft());
-        assertTrue(response.getRight().matches("^[\\w\\d]{10}$"), "Password must be 10 characters long and contain letters and numbers");
+        assertEquals("John.Doe", response.getUsername());
+        assertTrue(response.getPassword().matches("^[\\w\\d]{10}$"), "Пароль должен быть длиной 10 символов и содержать буквы и цифры");
         verify(userRepository).save(any(User.class));
         verify(trainerRepository).save(any(Trainer.class));
     }
 
     @Test
     void testUpdateTrainer() {
-        TrainerUpdateDTO updateDTO = new TrainerUpdateDTO();
-        updateDTO.setFirstName("Mary");
-        updateDTO.setLastName("Smith");
-        updateDTO.setSpecialization("Yoga");
+        String username = "username";
+        String firstName = "Mary";
+        String lastName = "Smith";
+        String specialization = "Yoga";
+        boolean isActive = true;
 
         User user = new User();
         Trainer trainer = new Trainer();
+        trainer.setTrainees(new HashSet<>());
         user.setTrainer(trainer);
         trainer.setUser(user);
 
         TrainingType trainingType = new TrainingType();
         trainingType.setTypeName("Yoga");
 
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
-        when(trainingTypeRepository.findByTypeName("Yoga")).thenReturn(Optional.of(trainingType));
+        when(trainingTypeRepository.findByTypeName(specialization)).thenReturn(Optional.of(trainingType));
 
-        String response = trainerService.updateTrainer("username", updateDTO);
+        TrainerResponse response = trainerService.updateTrainer(username, firstName, lastName, specialization, isActive);
 
         assertNotNull(response);
-        assertEquals("Mary", trainer.getUser().getFirstName());
-        assertEquals("Smith", trainer.getUser().getLastName());
-        assertEquals("Mary.Smith", response);
+        assertEquals(firstName, trainer.getUser().getFirstName());
+        assertEquals(lastName, trainer.getUser().getLastName());
+        assertEquals(specialization, response.getSpecialization());
         verify(trainerRepository).save(trainer);
     }
 

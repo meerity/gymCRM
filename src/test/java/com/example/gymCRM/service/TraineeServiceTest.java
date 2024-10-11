@@ -10,18 +10,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.example.gymcrm.dto.TraineeDTO;
-import com.example.gymcrm.dto.response.TraineeResponse;
-import com.example.gymcrm.dto.update.TraineeUpdateDTO;
+import com.example.gymcrm.dto.misc.UsernameAndPassword;
+import com.example.gymcrm.dto.response.trainee.TraineeResponse;
 import com.example.gymcrm.entity.Trainee;
 import com.example.gymcrm.entity.Trainer;
+import com.example.gymcrm.entity.TrainingType;
 import com.example.gymcrm.entity.User;
 import com.example.gymcrm.repository.TraineeRepository;
 import com.example.gymcrm.repository.UserRepository;
@@ -91,12 +90,10 @@ class TraineeServiceTest {
 
     @Test
     void testCreateTrainee() {
-        TraineeDTO traineeDTO = new TraineeDTO();
-        traineeDTO.setFirstName("John");
-        traineeDTO.setLastName("Doe");
-        traineeDTO.setAddress("123 Main St");
-        traineeDTO.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        traineeDTO.setIsActive(true);
+        String firstName = "John";
+        String lastName = "Doe";
+        String address = "123 Main St";
+        LocalDate dateOfBirth = LocalDate.of(1990, 1, 1);
 
         User user = new User();
         user.setUsername("John.Doe");
@@ -109,38 +106,39 @@ class TraineeServiceTest {
         when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
 
-        Pair<String, String> response = traineeService.createProfile(traineeDTO);
+        UsernameAndPassword response = traineeService.createProfile(firstName, lastName, dateOfBirth, address);
 
         assertNotNull(response);
-        assertEquals("John.Doe", response.getLeft());
-        assertTrue(response.getRight().matches("^[\\w\\d]{10}$"), "Password must be 10 characters long and contain letters and numbers");
+        assertEquals("John.Doe", response.getUsername());
+        assertTrue(response.getPassword().matches("^[\\w\\d]{10}$"), "Пароль должен быть длиной 10 символов и содержать буквы и цифры");
         verify(userRepository).save(any(User.class));
         verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test
     void testUpdateTrainee() {
-        TraineeUpdateDTO updateDTO = new TraineeUpdateDTO();
-        updateDTO.setFirstName("Jane");
-        updateDTO.setLastName("Smith");
-        updateDTO.setAddress("456 Oak Ave");
-        updateDTO.setDateOfBirth(LocalDate.of(1995, 5, 5));
+        String username = "username";
+        String firstName = "Jane";
+        String lastName = "Smith";
+        String address = "456 Oak Ave";
+        LocalDate dateOfBirth = LocalDate.of(1995, 5, 5);
+        boolean isActive = true;
 
         User user = new User();
         Trainee trainee = new Trainee();
+        trainee.setTrainers(new HashSet<>());
         user.setTrainee(trainee);
         trainee.setUser(user);
 
-        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
-        String response = traineeService.updateTrainee("username", updateDTO);
+        TraineeResponse response = traineeService.updateTrainee(username, firstName, lastName, dateOfBirth, address, isActive);
 
         assertNotNull(response);
-        assertEquals("Jane", trainee.getUser().getFirstName());
-        assertEquals("Smith", trainee.getUser().getLastName());
-        assertEquals("456 Oak Ave", trainee.getAddress());
-        assertEquals("Jane.Smith", response);
+        assertEquals(firstName, response.getFirstName());
+        assertEquals(lastName, response.getLastName());
+        assertEquals(address, response.getAddress());
         verify(traineeRepository).save(trainee);
     }
 
@@ -194,6 +192,7 @@ class TraineeServiceTest {
         trainer1User.setUsername("John.Doe");
         Trainer trainer1 = new Trainer();
         trainer1User.setTrainer(trainer1);
+        trainer1.setSpecialization(new TrainingType());
         trainer1.setUser(trainer1User);
         trainer1.setTrainees(new HashSet<>());
 
@@ -202,6 +201,7 @@ class TraineeServiceTest {
         trainer2User.setUsername("John.Doe1");
         Trainer trainer2 = new Trainer();
         trainer2User.setTrainer(trainer2);
+        trainer2.setSpecialization(new TrainingType());
         trainer2.setUser(trainer2User);
         trainer2.setTrainees(new HashSet<>());
 

@@ -2,7 +2,6 @@ package com.example.gymcrm.dto;
 
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
@@ -20,6 +19,4 @@ public class TrainerDTO {
     @NotBlank(message = "Specialization cannot be empty")
     private String specialization;
 
-    @NotNull(message = "Active status cannot be null")
-    private Boolean isActive;
 }
