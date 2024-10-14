@@ -10,10 +10,12 @@ import com.example.gymcrm.dto.response.training.TrainingResponseForTrainer;
 import com.example.gymcrm.entity.Training;
 import com.example.gymcrm.entity.TrainingType;
 import com.example.gymcrm.entity.User;
+import com.example.gymcrm.metrics.TrainingCreatedCountMetrics;
 import com.example.gymcrm.repository.TraineeRepository;
 import com.example.gymcrm.repository.TrainerRepository;
 import com.example.gymcrm.repository.TrainingRepository;
 import com.example.gymcrm.repository.UserRepository;
+import com.example.gymcrm.metrics.TrainingCreationTimer;
 import org.springframework.stereotype.Service;
 
 
@@ -26,11 +28,13 @@ public class TrainingService {
     private final TrainingRepository trainingRepository;
     private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
+    private final TrainingCreatedCountMetrics trainingCreatedCountMetrics;
+    private final TrainingCreationTimer trainingCreationTimer;
 
     public List<TrainingResponseForTrainer> getTrainingsWithCriteriaForTrainer(String username, LocalDate dateFrom, LocalDate dateTo, String fullName, String typeName) throws NoSuchElementException {
         boolean isTrainer = true;
 
-;
+
         List<Training> trainings = prepareTrainings(username, isTrainer);
         trainings = filterTrainings(trainings, dateFrom, dateTo, fullName, isTrainer, typeName);
 
@@ -88,44 +92,45 @@ public class TrainingService {
                 ? (training.getTrainee().getUser().getFirstName() + " " + training.getTrainee().getUser().getLastName())
                 : (training.getTrainer().getUser().getFirstName() + " " + training.getTrainer().getUser().getLastName()))
                 .equalsIgnoreCase(fullName)))
-                .peek(training -> System.out.println(training.getTrainingDate()))
         .filter(training -> (typeName == null || typeName.isEmpty() ||
             training.getTrainingType().getTypeName().equalsIgnoreCase(typeName)))
             .toList();
     }
 
-    public boolean addTraining(String trainerUsername, String traineeUsername, String trainingName, LocalDate trainingDate, int duration) throws NoSuchElementException {
-        User userTrainer = userRepository.findByUsername(trainerUsername)
-                .orElseThrow(() -> new NoSuchElementException("Cannot find Trainer by this username: " + trainerUsername));
+    public void addTraining(String trainerUsername, String traineeUsername, String trainingName, LocalDate trainingDate, int duration) throws NoSuchElementException {
+        trainingCreationTimer.recordCreationTime(() -> {
+            User userTrainer = userRepository.findByUsername(trainerUsername)
+                    .orElseThrow(() -> new NoSuchElementException("Cannot find Trainer by this username: " + trainerUsername));
 
         User userTrainee = userRepository.findByUsername(traineeUsername)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find Trainee by this username: " + traineeUsername));
-
-        if (userTrainee.getTrainee() == null) {
-            throw new NoSuchElementException("Invalid trainee");
-        }
         
-        if (userTrainer.getTrainer() == null) {
-            throw new NoSuchElementException("Invalid trainer");
-        }
+            if (userTrainee.getTrainee() == null) {
+                throw new NoSuchElementException("Invalid trainee");
+            }
         
-        Training training = new Training();
-        training.setTrainer(userTrainer.getTrainer());
-        training.setTrainee(userTrainee.getTrainee());
-        training.setTrainingName(trainingName);
+            if (userTrainer.getTrainer() == null) {
+                throw new NoSuchElementException("Invalid trainer");
+            }
+        
+            Training training = new Training();
+            training.setTrainer(userTrainer.getTrainer());
+            training.setTrainee(userTrainee.getTrainee());
+            training.setTrainingName(trainingName);
 
-        TrainingType type = userTrainer.getTrainer().getSpecialization();
-        training.setTrainingType(type);
-        training.setTrainingDate(trainingDate);
-        training.setDuration(duration);
+            TrainingType type = userTrainer.getTrainer().getSpecialization();
+            training.setTrainingType(type);
+            training.setTrainingDate(trainingDate);
+            training.setDuration(duration);
 
-        userTrainer.getTrainer().getTrainings().add(training);
-        userTrainee.getTrainee().getTrainings().add(training);
+            userTrainer.getTrainer().getTrainings().add(training);
+            userTrainee.getTrainee().getTrainings().add(training);
 
-        trainingRepository.save(training);
-        trainerRepository.save(userTrainer.getTrainer());
-        traineeRepository.save(userTrainee.getTrainee());
-        return true;
+            trainingRepository.save(training);
+            trainerRepository.save(userTrainer.getTrainer());
+            traineeRepository.save(userTrainee.getTrainee());
+        });
+        trainingCreatedCountMetrics.increment();
     }
 
 
