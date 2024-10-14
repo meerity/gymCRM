@@ -76,7 +76,7 @@ class TraineeControllerTest {
 
         ResponseEntity<String> response = traineeController.addTrainee(traineeDTO, errors);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         verifyNoInteractions(traineeService);
     }
 

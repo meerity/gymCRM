@@ -43,7 +43,7 @@ public class TrainingController {
         String trainingName = trainingDTO.getTrainingName();
         LocalDate trainingDate = trainingDTO.getTrainingDate();
         int duration = trainingDTO.getDuration();
-        trainingService.addTraining(traineeUsername, trainerUsername, trainingName, trainingDate, duration);
+        trainingService.addTraining(trainerUsername, traineeUsername, trainingName, trainingDate, duration);
         return ResponseEntity.ok("Successfully created new Training");
     }
     

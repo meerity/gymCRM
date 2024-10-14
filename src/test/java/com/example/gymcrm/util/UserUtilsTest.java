@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,7 +18,6 @@ class UserUtilsTest {
     @Mock
     private UserRepository userRepository;
 
-    private UserUtils userUtils;
 
     @BeforeEach
     void setUp() {
