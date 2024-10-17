@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import com.example.gymcrm.metrics.TrainingCreatedCountMetrics;
 import com.example.gymcrm.metrics.TrainingCreationTimer;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Aspect
 @Component
