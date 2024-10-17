@@ -51,8 +51,8 @@ class TrainingControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Successfully created new Training", response.getBody());
         verify(trainingService).addTraining(
-            trainingDTO.getTraineeUsername(),
             trainingDTO.getTrainerUsername(),
+            trainingDTO.getTraineeUsername(),
             trainingDTO.getTrainingName(),
             trainingDTO.getTrainingDate(),
             trainingDTO.getDuration()
