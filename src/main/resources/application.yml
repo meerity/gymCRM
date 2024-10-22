@@ -27,8 +27,8 @@ management:
     health:
       show-details: always
 jwt:
-  private-key-path: C:/Users/user/IdeaProjects/gymcrm/src/main/resources/keys/private_key.pem
-  public-key-path: C:/Users/user/IdeaProjects/gymcrm/src/main/resources/keys/public_key.pem
+  private-key-path: ${JWT_PRIVATE_KEY_PATH}
+  public-key-path: ${JWT_PUBLIC_KEY_PATH}
   expiration: 3600
 ---
 spring:
