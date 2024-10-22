@@ -17,36 +17,34 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void checkLogin(String username, String password) throws IllegalPasswordException {
-        User user = getNotNullUser(username);
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalPasswordException("Invalid username or password");
-        }
+    public User getUserByUsername(String username) throws NoSuchElementException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("User with username " + username + " not found"));
+    }
+
+    public boolean checkLogin(String username, String password) throws NoSuchElementException {
+        User user = getUserByUsername(username);
+        return passwordEncoder.matches(password, user.getPassword());
     }
 
     public boolean userIsTrainer(String username) throws NoSuchElementException {
-        User user = getNotNullUser(username);
+        User user = getUserByUsername(username);
         return user.getTrainer() != null;
     }
 
     public void toggleActive(String username) throws NoSuchElementException {
-        User user = getNotNullUser(username);
+        User user = getUserByUsername(username);
         user.setActive(!user.getActive());
         userRepository.save(user);
     }
 
     public void changePassword(String username, String oldPassword, String newPassword) throws IllegalArgumentException {
-        User user = getNotNullUser(username);
+        User user = getUserByUsername(username);
         if (passwordEncoder.matches(oldPassword, user.getPassword())) {
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
         } else {
             throw new IllegalPasswordException("Invalid old password or username");
         }
-    }
-
-    private User getNotNullUser(String username) throws NoSuchElementException {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new NoSuchElementException("User with username " + username + " not found"));
     }
 }

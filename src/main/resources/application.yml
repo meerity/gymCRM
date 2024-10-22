@@ -26,6 +26,10 @@ management:
   endpoint:
     health:
       show-details: always
+jwt:
+  private-key-path: C:/Users/user/IdeaProjects/gymcrm/src/main/resources/keys/private_key.pem
+  public-key-path: C:/Users/user/IdeaProjects/gymcrm/src/main/resources/keys/public_key.pem
+  expiration: 3600
 ---
 spring:
   config:

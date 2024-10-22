@@ -2,7 +2,7 @@ package com.example.gymcrm.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-
+import java.util.function.Supplier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,8 +16,8 @@ public class TrainingCreationTimer {
                 .register(meterRegistry);
     }
 
-    public void recordCreationTime(Runnable task) {
-        creationTimer.record(task);
+    public Object recordCreationTime(Supplier<?> task) {
+        return creationTimer.record(task);
     }
 
 }

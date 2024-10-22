@@ -1,4 +1,4 @@
-package com.example.gymcrm.aspects;
+package com.example.gymcrm.aspect;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -29,12 +29,13 @@ public class TrainingMetricsAspect {
     }
 
     @Around("addTrainingConfig()")
-    public void aroundAddTraining(ProceedingJoinPoint joinPoint) throws Throwable {
-        trainingCreationTimer.recordCreationTime(() -> {
+    public Object aroundAddTraining(ProceedingJoinPoint joinPoint) throws Throwable {
+        return trainingCreationTimer.recordCreationTime(() -> {
             try {
-                joinPoint.proceed();
+                return joinPoint.proceed();
             } catch (Throwable e) {
                 log.error("Error during training creation", e);
+                return null;
             }
         });
     }
