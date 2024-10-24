@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username = null;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Token is blank or in invalid format");
+            filterChain.doFilter(request, response);
             return;
         }
         jwt = authHeader.substring(7);
@@ -57,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            logger.error("Error authenticating token", e);
+            logger.error("Error authenticating token");
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token is invalid. Please login and provide valid token");
             return;
         }
