@@ -34,31 +34,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username = null;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+            sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Token is blank or in invalid format");
             return;
         }
         jwt = authHeader.substring(7);
+
         if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token has been invalidated");
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token has been invalidated");
             return;
         }
+
         try {
             username = jwtUtil.getUsernameFromToken(jwt);
-        } catch (Exception e) {
-            logger.error("Error authenticating token", e);
-            //ignoring token
-        }
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Error authenticating token", e);
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token is invalid. Please login and provide valid token");
+            return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        String jsonResponse = String.format(message);
+        response.getWriter().write(jsonResponse);
     }
 }

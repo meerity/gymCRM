@@ -33,7 +33,7 @@ public class TraineeService {
 
     private static final String THIS_USER_IS_TRAINER = "This user is trainer!";
 
-    private Pair<User, Trainee> getUserTraineeByUsername(String username) throws NoSuchElementException {
+    private Pair<User, Trainee> getUserTraineeByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User with username " + username + " not found"));
         if (user.getTrainee() == null && user.getTrainer() != null) {
@@ -59,7 +59,7 @@ public class TraineeService {
         }
     }
 
-    public TraineeResponse getTraineeForResponseByUsername(String username) throws NoSuchElementException {
+    public TraineeResponse getTraineeForResponseByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("Trainee was not found"));
         Trainee trainee = user.getTrainee();
@@ -98,7 +98,7 @@ public class TraineeService {
     }
 
     @Transactional
-    public TraineeResponse updateTrainee(String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) throws NoSuchElementException {
+    public TraineeResponse updateTrainee(String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) {
         Pair<User, Trainee> userAndTrainee = getUserTraineeByUsername(username);
         User user = userAndTrainee.getLeft();
         Trainee trainee = userAndTrainee.getRight();
@@ -117,7 +117,7 @@ public class TraineeService {
     }
 
     @Transactional
-    public List<FourFieldsTrainerResponse> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames) throws NoSuchElementException {
+    public List<FourFieldsTrainerResponse> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames) {
         Pair<User, Trainee> userAndTrainee = getUserTraineeByUsername(traineeUsername);
         Trainee trainee = userAndTrainee.getRight();
 
@@ -137,7 +137,7 @@ public class TraineeService {
         return newTrainers.stream().map(this::parseTrainerToFourFieldsTraineeResponse).toList();
     }
 
-    public void deleteTrainee(String username) throws NoSuchElementException {
+    public void deleteTrainee(String username) {
         User user =  userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User with username " + username + " not found"));
 
@@ -169,12 +169,14 @@ public class TraineeService {
         return traineeResponse; 
     }
 
-    private FourFieldsTrainerResponse parseTrainerToFourFieldsTraineeResponse(Trainer trainer){
+    private FourFieldsTrainerResponse parseTrainerToFourFieldsTraineeResponse(Trainer trainer) {
+
         FourFieldsTrainerResponse fourFieldsTraineeResponse = new FourFieldsTrainerResponse();
         fourFieldsTraineeResponse.setUsername(trainer.getUser().getUsername());
         fourFieldsTraineeResponse.setFirstName(trainer.getUser().getFirstName());
         fourFieldsTraineeResponse.setLastName(trainer.getUser().getLastName());
         fourFieldsTraineeResponse.setSpecialization(trainer.getSpecialization().getTypeName());
+
         return fourFieldsTraineeResponse;
     }
 

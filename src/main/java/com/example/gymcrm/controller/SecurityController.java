@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.gymcrm.dto.misc.UsernameAndPassword;
 import com.example.gymcrm.dto.update.PasswordChangeDTO;
+import com.example.gymcrm.exception.InvalidPasswordException;
 import com.example.gymcrm.service.LoginAttemptService;
 import com.example.gymcrm.service.TokenBlacklistService;
 import com.example.gymcrm.service.UserService;
@@ -93,7 +94,11 @@ public class SecurityController {
         if (errors.hasErrors()) {
             return ControllerUtils.getValidationErrorsStringResponse(errors);
         }
-        userService.changePassword(passwordChangeDTO.getUsername(), passwordChangeDTO.getOldPassword(), passwordChangeDTO.getNewPassword());
+        try {
+            userService.changePassword(passwordChangeDTO.getUsername(), passwordChangeDTO.getOldPassword(), passwordChangeDTO.getNewPassword());
+        } catch (InvalidPasswordException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
         return ResponseEntity.ok("Password updated successfully");
     }
 

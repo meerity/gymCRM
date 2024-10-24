@@ -36,7 +36,7 @@ public class TrainerService {
     private static final String THIS_USER_IS_TRAINEE = "This user is trainee!";
 
 
-    private Pair<User, Trainer> getUserTrainerByUsername(String username) throws NoSuchElementException {
+    private Pair<User, Trainer> getUserTrainerByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + username + " not found"));
 
@@ -77,7 +77,7 @@ public class TrainerService {
         return getTrainerResponse(user, trainer);
     }
 
-    public List<FourFieldsTrainerResponse> getNotAssignedActiveTrainersByTraineeUsername(String traineeUsername) throws NoSuchElementException {
+    public List<FourFieldsTrainerResponse> getNotAssignedActiveTrainersByTraineeUsername(String traineeUsername) {
         User userTrainee = userRepository.findByUsername(traineeUsername)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find Trainer by this username: " + traineeUsername));        
 
@@ -121,7 +121,7 @@ public class TrainerService {
     }
     
     @Transactional
-    public TrainerResponse updateTrainer(String username, String firstName, String lastName, String specialization, boolean isActive) throws NoSuchElementException {
+    public TrainerResponse updateTrainer(String username, String firstName, String lastName, String specialization, boolean isActive) {
         Pair<User, Trainer> userAndTrainer = getUserTrainerByUsername(username);
         User user = userAndTrainer.getLeft();
         Trainer trainer = userAndTrainer.getRight();
@@ -161,12 +161,14 @@ public class TrainerService {
         return response;
     }
 
-    private FourFieldsTrainerResponse getNotAssignedTrainerResponse(User user, Trainer trainer){
+    private FourFieldsTrainerResponse getNotAssignedTrainerResponse(User user, Trainer trainer) {
+
         FourFieldsTrainerResponse response = new FourFieldsTrainerResponse();
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
         response.setSpecialization(trainer.getSpecialization().getTypeName());
         response.setUsername(user.getUsername());
+
         return response;
     }
 

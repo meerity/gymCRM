@@ -13,6 +13,7 @@ public class TrainingTypeService {
     private final TrainingTypeRepository trainingTypeRepository;
 
     public List<TrainingTypeResponse> getTrainingTypes() {
+        
         return trainingTypeRepository.findAll().stream().map(trainingType -> {
             TrainingTypeResponse trainingTypeResponse = new TrainingTypeResponse();
             trainingTypeResponse.setTypeName(trainingType.getTypeName());

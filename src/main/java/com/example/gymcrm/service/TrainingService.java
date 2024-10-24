@@ -27,7 +27,7 @@ public class TrainingService {
     private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
 
-    public List<TrainingResponseForTrainer> getTrainingsWithCriteriaForTrainer(String username, LocalDate dateFrom, LocalDate dateTo, String fullName, String typeName) throws NoSuchElementException {
+    public List<TrainingResponseForTrainer> getTrainingsWithCriteriaForTrainer(String username, LocalDate dateFrom, LocalDate dateTo, String fullName, String typeName) {
         boolean isTrainer = true;
 
 
@@ -47,7 +47,7 @@ public class TrainingService {
                 .toList();
     }
     
-    public List<TrainingResponseForTrainee> getTrainingsWithCriteriaForTrainee(String username, LocalDate dateFrom, LocalDate dateTo, String fullName, String typeName) throws NoSuchElementException {
+    public List<TrainingResponseForTrainee> getTrainingsWithCriteriaForTrainee(String username, LocalDate dateFrom, LocalDate dateTo, String fullName, String typeName) {
         boolean isTrainer = false;
 
         List<Training> trainings = prepareTrainings(username, isTrainer);
@@ -93,7 +93,7 @@ public class TrainingService {
             .toList();
     }
 
-    public void addTraining(String trainerUsername, String traineeUsername, String trainingName, LocalDate trainingDate, int duration) throws NoSuchElementException {
+    public void addTraining(String trainerUsername, String traineeUsername, String trainingName, LocalDate trainingDate, int duration) {
         User userTrainer = userRepository.findByUsername(trainerUsername)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find Trainer by this username: " + trainerUsername));
 
